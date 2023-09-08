@@ -6,8 +6,12 @@ namespace AVX2.SIMD;
 //https://learn.microsoft.com/ru-ru/dotnet/standard/simd
 public class VectorsHandler
 {
-    public void Start(List<string> queries, List<string> laws, List<string> decisions)
+    public void Start(IEnumerable<IEnumerable<byte>> queries, IEnumerable<IEnumerable<byte>> laws, IEnumerable<IEnumerable<byte>> decisions)
     {
+        queries = queries.ToArray();
+        laws = laws.ToArray();
+        decisions = decisions.ToArray();
+
         //Проверка, наличия поддержки AVX2
         if (!Vector.IsHardwareAccelerated)
         {
@@ -15,52 +19,56 @@ public class VectorsHandler
             return;
         }
 
-        DateTime time = DateTime.Now;
         int count = 0;
-        queries.ForEach(query =>
+        DateTime start = DateTime.Now;
+        using IEnumerator<IEnumerable<byte>> enumerator = queries.GetEnumerator();
+        while (enumerator.MoveNext())
         {
-            //Преобразования текста в байты
-            byte[] checkBytes = Encoding.UTF8.GetBytes(query);
+            IEnumerable<IEnumerable<byte>> lawsResult = GetResults(laws, enumerator.Current).ToList();
+            IEnumerable<IEnumerable<byte>> decisionsResult = GetResults(decisions, enumerator.Current).ToList();
 
-            List<int> lawsIndexes = new();
-            for (int i = 0; i < laws.Count; i++)
+            Console.WriteLine($"Запрос № {count++}: {ByteToText(enumerator.Current)}");
+            if (!lawsResult.Any() && !decisionsResult.Any()) { Console.WriteLine("Совпадений не найдено"); }
+            else
             {
-                //Преобразования текста в байты
-                byte[] textBytes = Encoding.UTF8.GetBytes(laws[i]);
-                //Запуск сравнения векторов
-                bool isOk = Contains(textBytes, checkBytes);
-                if (isOk) { lawsIndexes.Add(i); }
-            }
-
-            List<int> decisionsIndexes = new();
-            for (int i = 0; i < decisions.Count; i++)
-            {
-                byte[] textBytes = Encoding.UTF8.GetBytes(decisions[i]);
-                bool isOk = Contains(textBytes, checkBytes);
-                if (isOk) { decisionsIndexes.Add(i); }
-            }
-
-            Console.WriteLine($"Запрос № {count++}: {query}");
-            if (lawsIndexes.Count is 0 && decisionsIndexes.Count is 0) { Console.WriteLine("Совпадений не найдено"); }
-            if (lawsIndexes.Count > 0)
-            {
-                List<int> indexes = lawsIndexes.Count <= 3 ? lawsIndexes : lawsIndexes.GetRange(0, 3);
-                Console.WriteLine($"Найдено законов: {lawsIndexes.Count}");
-                Console.WriteLine(string.Join("\r\n", indexes.Select(index => laws[index])));
-                if (lawsIndexes.Count > 3) { Console.WriteLine("..."); }
-            }
-            if (decisionsIndexes.Count > 0)
-            {
-                List<int> indexes = decisionsIndexes.Count <= 3 ? decisionsIndexes : decisionsIndexes.GetRange(0, 3);
-                Console.WriteLine($"Найдено судебных решений: {decisionsIndexes.Count}");
-                Console.WriteLine(string.Join("\r\n", indexes.Select(index => decisions[index])));
-                if (decisionsIndexes.Count > 3) { Console.WriteLine("..."); }
+                ViewResult(lawsResult, "Найдено законов");
+                ViewResult(decisionsResult, "Найдено судебных решений");
             }
 
             Console.WriteLine();
-        });
-        DateTime time2 = DateTime.Now;
-        Console.WriteLine(time2 - time);
+        }
+
+        DateTime end = DateTime.Now;
+        Console.WriteLine(end - start);
+    }
+
+    private IEnumerable<IEnumerable<byte>> GetResults(IEnumerable<IEnumerable<byte>> source, IEnumerable<byte> checkBytes)
+    {
+        source = source.ToArray();
+        checkBytes = checkBytes.ToArray();
+
+        IEnumerable<IEnumerable<byte>> values = new List<IEnumerable<byte>>();
+        using IEnumerator<IEnumerable<byte>> enumerator = source.GetEnumerator();
+        while (enumerator.MoveNext())
+        {
+            bool isOk = Contains(enumerator.Current, checkBytes);
+            if (isOk) { values = values.Append(enumerator.Current); }
+        }
+
+        return values;
+    }
+
+    private string ByteToText(IEnumerable<byte> bytes) => Encoding.UTF8.GetString(bytes.ToArray());
+
+    private void ViewResult(IEnumerable<IEnumerable<byte>> source, string message)
+    {
+        source = source.ToList();
+        if (!source.Any()) { return; }
+
+        int count = source.Count();
+        Console.WriteLine($"{message}: {count}");
+        Console.WriteLine(string.Join("\r\n", source.Take(3).Select(ByteToText)));
+        if (count > 3) { Console.WriteLine("..."); }
     }
 
     /// <summary>
@@ -73,11 +81,14 @@ public class VectorsHandler
     /// для textBytes смешаемся к Index 2 и начинаем поиск элемента 4 => Index 3
     /// И таким образом, необходимо в textBytes обнаружить все элементы из checkBytes
     /// </summary>
-    /// <param name="textBytes">Байтовый набор текста</param>
-    /// <param name="checkBytes">Байтовый набор обязательных символов</param>
+    /// <param name="verifiable">Байтовый набор текста</param>
+    /// <param name="mandatoryBytes">Байтовый набор обязательных символов</param>
     /// <returns></returns>
-    private bool Contains(byte[] textBytes, byte[] checkBytes)
+    private bool Contains(IEnumerable<byte> verifiable, IEnumerable<byte> mandatoryBytes)
     {
+        byte[] textBytes = verifiable.ToArray();
+        byte[] checkBytes = mandatoryBytes.ToArray();
+
         //Получаем размер Vector'а типа Byte
         int vectorSize = Vector<byte>.Count;
 
