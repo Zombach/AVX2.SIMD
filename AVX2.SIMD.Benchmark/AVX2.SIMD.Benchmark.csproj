@@ -15,4 +15,16 @@
     <ProjectReference Include="..\AVX2.SIMD\AVX2.SIMD.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="номера_законов.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="номера_запросы.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="номера_судебных_решений.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

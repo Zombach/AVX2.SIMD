@@ -3,9 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.8.34004.107
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AVX2.SIMD", "AVX2.SIMD\AVX2.SIMD.csproj", "{835B956F-0FFC-47F0-A0AA-ECF9C9B8491D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AVX2.SIMD", "AVX2.SIMD\AVX2.SIMD.csproj", "{835B956F-0FFC-47F0-A0AA-ECF9C9B8491D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AVX2.SIMD.Benchmark", "AVX2.SIMD.Benchmark\AVX2.SIMD.Benchmark.csproj", "{3E6BEBAE-213A-42BD-9DD5-2BCA47E19E0B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AVX2.SIMD.Benchmark", "AVX2.SIMD.Benchmark\AVX2.SIMD.Benchmark.csproj", "{3E6BEBAE-213A-42BD-9DD5-2BCA47E19E0B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AVX2.SIMD.NUnitTest", "AVX2.SIMD.NUnitTest\AVX2.SIMD.NUnitTest.csproj", "{5564C3B8-FD03-4FC3-8F51-D22021B1821D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{3E6BEBAE-213A-42BD-9DD5-2BCA47E19E0B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3E6BEBAE-213A-42BD-9DD5-2BCA47E19E0B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3E6BEBAE-213A-42BD-9DD5-2BCA47E19E0B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5564C3B8-FD03-4FC3-8F51-D22021B1821D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5564C3B8-FD03-4FC3-8F51-D22021B1821D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5564C3B8-FD03-4FC3-8F51-D22021B1821D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5564C3B8-FD03-4FC3-8F51-D22021B1821D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
