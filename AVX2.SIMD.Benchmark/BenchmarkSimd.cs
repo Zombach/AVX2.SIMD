@@ -18,9 +18,9 @@ public class BenchmarkSimd
     }
 
     private readonly VectorsHandler _vectorsHandler;
-    private IEnumerable<IEnumerable<byte>> _queries;
-    private readonly IEnumerable<IEnumerable<byte>> _laws;
-    private readonly IEnumerable<IEnumerable<byte>> _decisions;
+    private List<byte[]> _queries;
+    private readonly List<byte[]> _laws;
+    private readonly List<byte[]> _decisions;
     public BenchmarkSimd()
     {
         _vectorsHandler = new();
@@ -40,7 +40,7 @@ public class BenchmarkSimd
     public void BenchmarkSimdTest_2()
     {
         byte[] bytes = "118/18"u8.ToArray();
-        _queries = new List<IEnumerable<byte>>() { bytes };
+        _queries = new List<byte[]> { bytes };
         _vectorsHandler.Start(_queries, _laws, _decisions);
     }
 }

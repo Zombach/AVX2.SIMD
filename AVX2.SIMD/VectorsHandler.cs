@@ -6,26 +6,24 @@ namespace AVX2.SIMD;
 //https://learn.microsoft.com/ru-ru/dotnet/standard/simd
 public class VectorsHandler
 {
-    public void Start(IEnumerable<IEnumerable<byte>> queries, IEnumerable<IEnumerable<byte>> laws, IEnumerable<IEnumerable<byte>> decisions)
+    public void Start(IEnumerable<IEnumerable<byte>> queries, IEnumerable<IEnumerable<byte>> lawsSource, IEnumerable<IEnumerable<byte>> decisionsSource)
     {
-        queries = queries.ToArray();
-        laws = laws.ToArray();
-        decisions = decisions.ToArray();
-
         //Проверка, наличия поддержки AVX2
         if (!Vector.IsHardwareAccelerated)
         {
             Console.WriteLine("Не поддерживается системой");
             return;
         }
-
+        
         int count = 0;
         DateTime start = DateTime.Now;
-        using IEnumerator<IEnumerable<byte>> enumerator = queries.GetEnumerator();
+        List<byte[]> laws = lawsSource.Select(law => law.ToArray()).ToList();
+        List<byte[]> decisions = decisionsSource.Select(decision => decision.ToArray()).ToList();
+        using IEnumerator<byte[]> enumerator = queries.Select(query => query.ToArray()).GetEnumerator();
         while (enumerator.MoveNext())
         {
-            IEnumerable<IEnumerable<byte>> lawsResult = GetResults(laws, enumerator.Current).ToList();
-            IEnumerable<IEnumerable<byte>> decisionsResult = GetResults(decisions, enumerator.Current).ToList();
+            List<byte[]> lawsResult = GetResults(laws, enumerator.Current);
+            List<byte[]> decisionsResult = GetResults(decisions, enumerator.Current);
 
             Console.WriteLine($"Запрос № {count++}: {ByteToText(enumerator.Current)}");
             if (!lawsResult.Any() && !decisionsResult.Any()) { Console.WriteLine("Совпадений не найдено"); }
@@ -42,17 +40,14 @@ public class VectorsHandler
         Console.WriteLine(end - start);
     }
 
-    private IEnumerable<IEnumerable<byte>> GetResults(IEnumerable<IEnumerable<byte>> source, IEnumerable<byte> checkBytes)
+    private List<byte[]> GetResults(List<byte[]> source, byte[] checkBytes)
     {
-        source = source.ToArray();
-        checkBytes = checkBytes.ToArray();
-
-        IEnumerable<IEnumerable<byte>> values = new List<IEnumerable<byte>>();
-        using IEnumerator<IEnumerable<byte>> enumerator = source.GetEnumerator();
+        List<byte[]> values = new();
+        using IEnumerator<byte[]> enumerator = source.GetEnumerator();
         while (enumerator.MoveNext())
         {
             bool isOk = Contains(enumerator.Current, checkBytes);
-            if (isOk) { values = values.Append(enumerator.Current); }
+            if (isOk) { values.Add(enumerator.Current); }
         }
 
         return values;
@@ -60,12 +55,10 @@ public class VectorsHandler
 
     private string ByteToText(IEnumerable<byte> bytes) => Encoding.UTF8.GetString(bytes.ToArray());
 
-    private void ViewResult(IEnumerable<IEnumerable<byte>> source, string message)
+    private void ViewResult(List<byte[]> source, string message)
     {
-        source = source.ToList();
         if (!source.Any()) { return; }
-
-        int count = source.Count();
+        int count = source.Count;
         Console.WriteLine($"{message}: {count}");
         Console.WriteLine(string.Join("\r\n", source.Take(3).Select(ByteToText)));
         if (count > 3) { Console.WriteLine("..."); }
@@ -84,26 +77,23 @@ public class VectorsHandler
     /// <param name="verifiable">Байтовый набор текста</param>
     /// <param name="mandatoryBytes">Байтовый набор обязательных символов</param>
     /// <returns></returns>
-    private bool Contains(IEnumerable<byte> verifiable, IEnumerable<byte> mandatoryBytes)
+    private bool Contains(byte[] verifiable, byte[] mandatoryBytes)
     {
-        byte[] textBytes = verifiable.ToArray();
-        byte[] checkBytes = mandatoryBytes.ToArray();
-
         //Получаем размер Vector'а типа Byte
         int vectorSize = Vector<byte>.Count;
 
         int indexText = 0;
         int indexByte = 0;
-        for (; indexByte < checkBytes.Length; indexByte++)
+        for (; indexByte < mandatoryBytes.Length; indexByte++)
         {
             //Создаем Vector проверяющего i - итого байта
             //Весь вектор размером vectorSize состоит из повторяющегося байта
-            Vector<byte> byteVector = new(checkBytes[indexByte]);
+            Vector<byte> byteVector = new(mandatoryBytes[indexByte]);
             bool isNext = false;
-            for (; indexText < textBytes.Length - vectorSize; indexText += vectorSize)
+            for (; indexText < verifiable.Length - vectorSize; indexText += vectorSize)
             {
                 //Создаем Vector текста
-                Vector<byte> textVector = new(textBytes, indexText);
+                Vector<byte> textVector = new(verifiable, indexText);
                 //Сравниваем вектора, если байт совпал, то значение 255, если нет, то 0 
                 Vector<byte> result = Vector.Equals(textVector, byteVector);
 
@@ -121,13 +111,13 @@ public class VectorsHandler
             }
             if (!isNext) { break; }
         }
-        if (indexByte == checkBytes.Length) { return true; }
+        if (indexByte == mandatoryBytes.Length) { return true; }
         //Получаем остаток текста, который не входит в вектор
-        int remaining = textBytes.Length % vectorSize;
-        for (int i = textBytes.Length - remaining; i < textBytes.Length; i++)
+        int remaining = verifiable.Length % vectorSize;
+        for (int i = verifiable.Length - remaining; i < verifiable.Length; i++)
         {
-            if (textBytes[i] == checkBytes[indexByte]) { indexByte++; }
-            if (indexByte == checkBytes.Length) { return true; }
+            if (verifiable[i] == mandatoryBytes[indexByte]) { indexByte++; }
+            if (indexByte == mandatoryBytes.Length) { return true; }
         }
         return false;
     }

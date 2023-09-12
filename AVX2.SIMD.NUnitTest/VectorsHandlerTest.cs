@@ -1,4 +1,6 @@
 using System.Text;
+using AVX2.SIMD.Benchmark;
+using NUnit.Framework;
 
 namespace AVX2.SIMD.NUnitTest
 {
@@ -14,7 +16,7 @@ namespace AVX2.SIMD.NUnitTest
         {
             _vectorsHandler = new();
             Io io = new();
-            _queries = io.GetLines("номера_запросы.txt");
+            _queries = io.GetLines($"номера_запросы.txt");
             _laws = io.GetLines("номера_законов.txt");
             _decisions = io.GetLines("номера_судебных_решений.txt");
         }
@@ -23,6 +25,7 @@ namespace AVX2.SIMD.NUnitTest
         [TestCase(25)]
         [TestCase(50)]
         [TestCase(100)]
+        [TestCase(1000)]
         public void Test1(int count)
         {
             _vectorsHandler.Start(_queries.Take(count), _laws, _decisions);
