@@ -31,7 +31,7 @@ namespace AVX2.SIMD.NUnitTest
             _vectorsHandler.Start(_queries.Take(count), _laws, _decisions);
         }
 
-        [TestCase("118/81")]
+        [TestCase("1181")]
         [TestCase("14Ю1")]
         [TestCase("14/81")]
         [TestCase("118/41")]
